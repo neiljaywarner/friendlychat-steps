@@ -95,7 +95,7 @@ class ChatMessage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   new Text(
-                      snapshot.value['name'],
+                      "${snapshot.value['name']} (IN: ${snapshot.value['signinTime']})",
                       style: Theme.of(context).textTheme.subhead),
                   new Container(
                     margin: const EdgeInsets.only(top: 5.0),
@@ -228,10 +228,12 @@ class ChatScreenState extends State<ChatScreen> {
     String name = _textControllerName.text;
     String email = _textControllerEmail.text;
     String phone = _textControllerPhone.text;
+    String signinTime = _buildNowString24HrTime();
     reference.push().set({
       'email': email,
       'name': name,
-      'phone': phone
+      'phone': phone,
+      'signinTime': signinTime
     });
     // TODO: Also push signin time as curren titme when tap...
     _textControllerName.clear();
@@ -242,6 +244,11 @@ class ChatScreenState extends State<ChatScreen> {
 
   void updateInfo({ String signin, String signout}) {
     //reference.p
+  }
+
+  String _buildNowString24HrTime() {
+    TimeOfDay timeOfDay = new TimeOfDay.now();
+    return "${timeOfDay.hour}:${timeOfDay.minute}";
   }
 
 }
