@@ -26,14 +26,17 @@ final ThemeData kDefaultTheme = new ThemeData(
 final googleSignIn = new GoogleSignIn();
 final analytics = new FirebaseAnalytics();
 final auth = FirebaseAuth.instance;
+// TODO: update this.
 final reference = FirebaseDatabase.instance.reference().child('messages');
 
-const String _email = "neil@test.com";
 
 void main() {
   runApp(new FriendlychatApp());
 }
 
+// Note: right now it deosn't require login.
+// we will want to ensure login before allowing the reporting feature...
+// etc.
 Future<Null> _ensureLoggedIn() async {
   GoogleSignInAccount user = googleSignIn.currentUser;
   if (user == null)
@@ -56,7 +59,7 @@ class FriendlychatApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
-      title: "Friendljychat",
+      title: "HopeNW Signin",
       theme: defaultTargetPlatform == TargetPlatform.iOS
           ? kIOSTheme
           : kDefaultTheme,
@@ -83,7 +86,8 @@ class ChatMessage extends StatelessWidget {
           children: <Widget>[
             new Container(
               margin: const EdgeInsets.only(right: 16.0),
-              child: new Text("skippic")
+              // TODO: Change this to in/out with child being a column i think.
+              child: new Text(snapshot.value['phone'])
               //child: new CircleAvatar(backgroundImage: new NetworkImage(snapshot.value['senderPhotoUrl'])),
             ),
             new Expanded(
@@ -116,7 +120,10 @@ class ChatScreen extends StatefulWidget {
 }
 
 class ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _textController = new TextEditingController();
+  final TextEditingController _textControllerName = new TextEditingController();
+  final TextEditingController _textControllerEmail = new TextEditingController();
+  final TextEditingController _textControllerPhone = new TextEditingController();
+
   bool _isComposing = false;
 
   @override
@@ -158,13 +165,24 @@ class ChatScreenState extends State<ChatScreen> {
           child: new Row(children: <Widget>[
             new Flexible(
               child: new TextField(
-                controller: _textController,
+                controller: _textControllerName,
                 onChanged: (String text) {setState(() {_isComposing = text.length > 0;}); },
-                onSubmitted: _handleSubmitted, decoration: new InputDecoration.collapsed(hintText: "Send a message"),
+                onSubmitted: null, decoration: new InputDecoration.collapsed(hintText: "Name"),
               ),
             ),
             new Flexible(
-              child: new Text("joe")
+              child: new TextField(
+                controller: _textControllerPhone,
+                keyboardType: TextInputType.phone,
+                onSubmitted: null, decoration: new InputDecoration.collapsed(hintText: "Phone"),
+              ),
+            ),
+            new Flexible(
+              child: new TextField(
+                controller: _textControllerEmail,
+                keyboardType: TextInputType.emailAddress,
+                onSubmitted: null, decoration: new InputDecoration.collapsed(hintText: "Email"),
+              ),
             ),
             new Container(
                 margin: new EdgeInsets.symmetric(horizontal: 4.0),
@@ -172,13 +190,13 @@ class ChatScreenState extends State<ChatScreen> {
                     ? new CupertinoButton(
                         child: new Text("Send"),
                         onPressed: _isComposing
-                            ? () => _sign_up()
+                            ? () => _signUp()
                             : null,
                       )
                     : new IconButton(
                         icon: new Icon(Icons.send),
                         onPressed: _isComposing
-                            ? () => _sign_up()
+                            ? () => _signUp()
                             : null,
                       )),
           ]),
@@ -191,36 +209,36 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   // TODO: remove this isComposing stuff
-
+  // TODO: Keep the below original code to consider if/when user needs validated
+  // as a signed in firebase user.
+ /*
   Future<Null> _handleSubmitted(String text) async {
-    _textController.clear();
+    _textControllerName.clear();
     setState(() {
       _isComposing = false;
     });
     await _ensureLoggedIn();
    // _sendMessage(text: text);
   }
+  */
 
-  void _sign_up() {
+  Future<Null>  _signUp() async {
     // todo; await _ensureLoggedIn? or await ensure logged in when using admin function...
     // or if db is locked down do it here... or on screen start...
-    String name = _textController.text;
-    String email = _email;
+    String name = _textControllerName.text;
+    String email = _textControllerEmail.text;
+    String phone = _textControllerPhone.text;
     reference.push().set({
       'email': email,
-      'name': name
+      'name': name,
+      'phone': phone
     });
     // TODO: Also push signin time as curren titme when tap...
-    _textController.clear();
+    _textControllerName.clear();
+    _textControllerEmail.clear();
+    _textControllerPhone.clear();
     analytics.logEvent(name: 'sign_in_new_user');  }
 
-  void _sendMessage({ String text }) {
-    reference.push().set({
-      'email': text,
-      'name': googleSignIn.currentUser.displayName
-    });
-    analytics.logEvent(name: 'send_message');
-  }
 
   void updateInfo({ String signin, String signout}) {
     //reference.p
