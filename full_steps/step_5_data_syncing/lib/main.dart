@@ -28,7 +28,7 @@ final analytics = new FirebaseAnalytics();
 final auth = FirebaseAuth.instance;
 final reference = FirebaseDatabase.instance.reference().child('messages');
 
-const String _name = "Your Name";
+const String _email = "neil@test.com";
 
 void main() {
   runApp(new FriendlychatApp());
@@ -97,7 +97,7 @@ class ChatMessage extends StatelessWidget {
                     margin: const EdgeInsets.only(top: 5.0),
                     child:
                     new Text(
-                        snapshot.value['text']
+                        snapshot.value['email']
                     ),
                   ),
                 ],
@@ -123,7 +123,7 @@ class ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return new Scaffold(
         appBar: new AppBar(
-          title: new Text("Frienffdlychat"),
+          title: new Text("Hope Signup"),
           elevation: Theme.of(context).platform == TargetPlatform.iOS ? 0.0 : 4.0,
         ),
         body: new Column(children: <Widget>[
@@ -159,15 +159,12 @@ class ChatScreenState extends State<ChatScreen> {
             new Flexible(
               child: new TextField(
                 controller: _textController,
-                onChanged: (String text) {
-                  setState(() {
-                    _isComposing = text.length > 0;
-                  });
-                },
-                onSubmitted: _handleSubmitted,
-                decoration:
-                    new InputDecoration.collapsed(hintText: "Send a message"),
+                onChanged: (String text) {setState(() {_isComposing = text.length > 0;}); },
+                onSubmitted: _handleSubmitted, decoration: new InputDecoration.collapsed(hintText: "Send a message"),
               ),
+            ),
+            new Flexible(
+              child: new Text("joe")
             ),
             new Container(
                 margin: new EdgeInsets.symmetric(horizontal: 4.0),
@@ -175,13 +172,13 @@ class ChatScreenState extends State<ChatScreen> {
                     ? new CupertinoButton(
                         child: new Text("Send"),
                         onPressed: _isComposing
-                            ? () => _handleSubmitted(_textController.text)
+                            ? () => _sign_up()
                             : null,
                       )
                     : new IconButton(
                         icon: new Icon(Icons.send),
                         onPressed: _isComposing
-                            ? () => _handleSubmitted(_textController.text)
+                            ? () => _sign_up()
                             : null,
                       )),
           ]),
@@ -193,21 +190,40 @@ class ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  // TODO: remove this isComposing stuff
+
   Future<Null> _handleSubmitted(String text) async {
     _textController.clear();
     setState(() {
       _isComposing = false;
     });
     await _ensureLoggedIn();
-    _sendMessage(text: text);
+   // _sendMessage(text: text);
   }
+
+  void _sign_up() {
+    // todo; await _ensureLoggedIn? or await ensure logged in when using admin function...
+    // or if db is locked down do it here... or on screen start...
+    String name = _textController.text;
+    String email = _email;
+    reference.push().set({
+      'email': email,
+      'name': name
+    });
+    // TODO: Also push signin time as curren titme when tap...
+    _textController.clear();
+    analytics.logEvent(name: 'sign_in_new_user');  }
 
   void _sendMessage({ String text }) {
     reference.push().set({
-      'text': text,
+      'email': text,
       'name': googleSignIn.currentUser.displayName
     });
     analytics.logEvent(name: 'send_message');
+  }
+
+  void updateInfo({ String signin, String signout}) {
+    //reference.p
   }
 
 }
