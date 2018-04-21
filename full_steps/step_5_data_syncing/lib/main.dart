@@ -59,7 +59,7 @@ class FriendlychatApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
-      title: "HopeNW Signin",
+      title: "HopeNW Sign in",
       theme: defaultTargetPlatform == TargetPlatform.iOS
           ? kIOSTheme
           : kDefaultTheme,
@@ -69,15 +69,14 @@ class FriendlychatApp extends StatelessWidget {
 }
 
 @override
-class ChatMessage extends StatelessWidget {
-  ChatMessage({this.snapshot, this.animation});
+class VolunteerEntry extends StatelessWidget {
+  VolunteerEntry({this.snapshot, this.animation});
   final DataSnapshot snapshot;
   final Animation animation;
 
   Widget build(BuildContext context) {
     return new SizeTransition(
-      sizeFactor: new CurvedAnimation(
-          parent: animation, curve: Curves.easeOut),
+      sizeFactor: new CurvedAnimation(parent: animation, curve: Curves.easeOut),
       axisAlignment: 0.0,
       child: new Container(
         margin: const EdgeInsets.symmetric(vertical: 10.0),
@@ -87,7 +86,7 @@ class ChatMessage extends StatelessWidget {
             new Container(
               margin: const EdgeInsets.only(right: 16.0),
               // TODO: Change this to in/out with child being a column i think.
-              child: new Text(snapshot.value['phone'])
+              child: new FlatButton(onPressed: onPressedSignout(snapshot), child: new Text("Sign out"))
               //child: new CircleAvatar(backgroundImage: new NetworkImage(snapshot.value['senderPhotoUrl'])),
             ),
             new Expanded(
@@ -95,14 +94,12 @@ class ChatMessage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   new Text(
-                      "${snapshot.value['name']} (IN: ${snapshot.value['signinTime']})",
+                      "${snapshot.value['name']} (${snapshot.value['phone']}) (IN: ${snapshot.value['signInTime']})",
                       style: Theme.of(context).textTheme.subhead),
                   new Container(
                     margin: const EdgeInsets.only(top: 5.0),
                     child:
-                    new Text(
-                        snapshot.value['email']
-                    ),
+                    new Text(buildListLine2(snapshot.value['email'], snapshot.value['signOutTime'])),
                   ),
                 ],
               ),
@@ -111,6 +108,22 @@ class ChatMessage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  onPressedSignout(DataSnapshot snapshot) {
+    //TODO: deJsonIfy so we have an entry class
+    String name = snapshot.value['name'];
+    debugPrint("user has pressed signout for $name");
+    _signout(snapshot);
+  }
+
+  //TODO: Remove when cleaned up so we're not in a line1/line2 style
+  String buildListLine2(String email, String signOutTime) {
+    if (signOutTime.isEmpty) {
+      return email;
+    } else {
+      return "$email (OUT: $signOutTime)";
+    }
   }
 }
 
@@ -130,7 +143,7 @@ class ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return new Scaffold(
         appBar: new AppBar(
-          title: new Text("Hope Signup"),
+          title: new Text("HOPE Signup"),
           elevation: Theme.of(context).platform == TargetPlatform.iOS ? 0.0 : 4.0,
         ),
         body: new Column(children: <Widget>[
@@ -141,10 +154,7 @@ class ChatScreenState extends State<ChatScreen> {
               padding: new EdgeInsets.all(8.0),
               reverse: true,
               itemBuilder: (_, DataSnapshot snapshot, Animation<double> animation) {
-                return new ChatMessage(
-                  snapshot: snapshot,
-                  animation: animation
-                );
+                return new VolunteerEntry(snapshot: snapshot, animation: animation);
               },
             ),
           ),
@@ -228,12 +238,13 @@ class ChatScreenState extends State<ChatScreen> {
     String name = _textControllerName.text;
     String email = _textControllerEmail.text;
     String phone = _textControllerPhone.text;
-    String signinTime = _buildNowString24HrTime();
+    String signInTime = _buildNowString24HrTime();
     reference.push().set({
       'email': email,
       'name': name,
       'phone': phone,
-      'signinTime': signinTime
+      'signInTime': signInTime,
+      'signOutTime': ""
     });
     // TODO: Also push signin time as curren titme when tap...
     _textControllerName.clear();
@@ -246,9 +257,47 @@ class ChatScreenState extends State<ChatScreen> {
     //reference.p
   }
 
-  String _buildNowString24HrTime() {
-    TimeOfDay timeOfDay = new TimeOfDay.now();
-    return "${timeOfDay.hour}:${timeOfDay.minute}";
-  }
+
+
+
 
 }
+String _buildNowString24HrTime() {
+  TimeOfDay timeOfDay = new TimeOfDay.now();
+  return "${timeOfDay.hour}:${timeOfDay.minute}";
+}
+
+Future<Null> _signout(DataSnapshot signinRowSnapshot) async {
+  // Increment counter in transaction.
+  // TODO: Cleanup like Item with toJson etc like in example.
+  String signoutTime  = _buildNowString24HrTime();
+  reference.child(signinRowSnapshot.key).set({
+    'email': signinRowSnapshot.value['email'],
+    'name': signinRowSnapshot.value['name'],
+    'phone': signinRowSnapshot.value['phone'],
+    'signInTime': signinRowSnapshot.value['signInTime'],
+    'signOutTime': signoutTime
+  });
+
+
+  //todo: then/on to show error message etc.
+  /*
+  final TransactionResult transactionResult =
+  await _counterRef.runTransaction((MutableData mutableData) async {
+    mutableData.value = (mutableData.value ?? 0) + 1;
+    return mutableData;
+  });
+
+  if (transactionResult.committed) {
+    _messagesRef.push().set(<String, String>{
+      _kTestKey: '$_kTestValue ${transactionResult.dataSnapshot.value}'
+    });
+  } else {
+    print('Transaction not committed.');
+    if (transactionResult.error != null) {
+      print(transactionResult.error.message);
+    }
+  }
+  */
+}
+
