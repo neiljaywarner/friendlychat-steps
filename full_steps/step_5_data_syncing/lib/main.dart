@@ -114,7 +114,7 @@ class VolunteerEntry extends StatelessWidget {
     //TODO: deJsonIfy so we have an entry class
     String name = snapshot.value['name'];
     debugPrint("user has pressed signout for $name");
-    _signout(snapshot);
+    //_signout(snapshot);
   }
 
   //TODO: Remove when cleaned up so we're not in a line1/line2 style
@@ -264,20 +264,33 @@ class ChatScreenState extends State<ChatScreen> {
 }
 String _buildNowString24HrTime() {
   TimeOfDay timeOfDay = new TimeOfDay.now();
-  return "${timeOfDay.hour}:${timeOfDay.minute}";
+  int minute = timeOfDay.minute;
+  if (minute < 10) {
+    return "${timeOfDay.hour}:0${timeOfDay.minute}";
+  } else {
+    return "${timeOfDay.hour}:${timeOfDay.minute}";
+  }
 }
 
 Future<Null> _signout(DataSnapshot signinRowSnapshot) async {
   // Increment counter in transaction.
   // TODO: Cleanup like Item with toJson etc like in example.
-  String signoutTime  = _buildNowString24HrTime();
-  reference.child(signinRowSnapshot.key).set({
-    'email': signinRowSnapshot.value['email'],
-    'name': signinRowSnapshot.value['name'],
-    'phone': signinRowSnapshot.value['phone'],
-    'signInTime': signinRowSnapshot.value['signInTime'],
-    'signOutTime': signoutTime
+  String signOutTime  = _buildNowString24HrTime();
+  String name = signinRowSnapshot.value['name'];
+  String email = signinRowSnapshot.value['email'];
+  String phone = signinRowSnapshot.value['phone'];
+  String signInTime = signinRowSnapshot.value['signInTime'];
+
+  reference.child(signinRowSnapshot.key).remove();
+  reference.push().set({
+    'email': email,
+    'name': name,
+    'phone': phone,
+    'signInTime': signInTime,
+    'signOutTime': signOutTime
   });
+  //TODO: on Errror, onSuccess
+
 
 
   //todo: then/on to show error message etc.
